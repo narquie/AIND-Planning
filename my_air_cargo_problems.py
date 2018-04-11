@@ -48,18 +48,13 @@ class AirCargoProblem(Problem):
             list of Action objects
         """
 
-        # TODO create concrete Action objects based on the domain action schema for: Load, Unload, and Fly
-        # concrete actions definition: specific literal action that does not include variables as with the schema
-        # for example, the action schema 'Load(c, p, a)' can represent the concrete actions 'Load(C1, P1, SFO)'
-        # or 'Load(C2, P2, JFK)'.  The actions for the planning problem must be concrete because the problems in
-        # forward search and Planning Graphs must use Propositional Logic
-
         def load_actions():
             """Create all concrete Load actions and return a list
 
             :return: list of Action objects
             """
             loads = []
+            # For all airports, planes, and cargo, add the action: load the cargo into the airplane
             for a in self.airports:
                 for p in self.planes:
                     for c in self.cargos:
@@ -80,6 +75,7 @@ class AirCargoProblem(Problem):
             :return: list of Action objects
             """
             unloads = []
+            # For all airports, planes, and cargo, add the action: unload the cargo into the airport
             for a in self.airports:
                 for p in self.planes:
                     for c in self.cargos:
@@ -126,8 +122,11 @@ class AirCargoProblem(Problem):
         :return: list of Action objects
         """
         possible_actions = []
+        # Create knowledge base
         kb = PropKB()
+        # Add the current state to the KB
         kb.tell(decode_state(state,self.state_map).pos_sentence())
+        # Add all actions that can be performed
         for i in self.get_actions():
             if i.check_precond(kb, i.args):
                 possible_actions.append(i)
@@ -143,11 +142,16 @@ class AirCargoProblem(Problem):
         :return: resulting state after action
         """
         new_state = FluentState([], [])
+        # Create knowledge base
         kb = PropKB()
+        # Add the current state to the KB
         kb.tell(decode_state(state,self.state_map).pos_sentence())
+        # Change the KB according to action
         action.act(kb,action.args)
+        # Add those changes to the FluentState
         for i in kb.clauses:
             new_state.pos.append(i)
+        # Return the state in string formate (encode)
         return encode_state(new_state, self.state_map)
 
     def goal_test(self, state: str) -> bool:
@@ -187,8 +191,15 @@ class AirCargoProblem(Problem):
         conditions by ignoring the preconditions required for an action to be
         executed.
         """
-        # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
         count = 0
+        # Create knowledge base
+        kb = PropKB()
+        # Add the state of the node
+        kb.tell(decode_state(node.state, self.state_map).pos_sentence())
+        # If a part of the goal state is not solved, up the cost by 1
+        for clause in self.goal:
+            if clause not in kb.clauses:
+                count += 1
         return count
 
 
@@ -218,6 +229,7 @@ def air_cargo_p1() -> AirCargoProblem:
 
 
 def air_cargo_p2() -> AirCargoProblem:
+    # Create specifications based on problem 2
     cargos = ['C1', 'C2', 'C3']
     planes = ['P1', 'P2', 'P3']
     airports = ['JFK', 'SFO', 'ATL']
@@ -258,6 +270,7 @@ def air_cargo_p2() -> AirCargoProblem:
     return AirCargoProblem(cargos, planes, airports, init, goal)
 
 def air_cargo_p3() -> AirCargoProblem:
+    # Create specifications based on problem 3
     cargos = ['C1', 'C2', 'C3','C4']
     planes = ['P1', 'P2']
     airports = ['JFK', 'SFO', 'ATL','ORD']
